@@ -49,8 +49,8 @@ export const projects: { title: string; stack: string[]; points: string[]; link?
   {
     title: 'Real-Time Face Recognition & Attendance System',
     stack: ['Python', 'Dlib', 'OpenCV'],
-    link: 'https://github.com/hemanth145/face-attendance-system',
-    linkLabel: 'View on GitHub',
+    link: 'https://face-attendance-system-p5hfhd3scqm6gdtreauhnq.streamlit.app',
+    linkLabel: 'Live demo',
     points: [
       'Designed and deployed a real-time face recognition system integrating facial landmark detection, histogram equalization, and Adaboost/Haar cascade tracking for high accuracy.',
       'Optimized for real-time execution via multithreading and memory-efficient data handling; validated across diverse camera environments.',
