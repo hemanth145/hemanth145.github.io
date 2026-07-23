@@ -213,51 +213,6 @@ function Reveal({ as: Tag = 'div', className = '', delay = 0, children, ...rest 
   )
 }
 
-function Avatar({ reducedMotion }) {
-  const tiltRef = useRef(null)
-
-  useEffect(() => {
-    if (reducedMotion) return undefined
-    if (window.matchMedia && !window.matchMedia('(pointer: fine)').matches) return undefined
-
-    const el = tiltRef.current
-    if (!el) return undefined
-
-    const handleMove = (e) => {
-      const rect = el.getBoundingClientRect()
-      const cx = rect.left + rect.width / 2
-      const cy = rect.top + rect.height / 2
-      const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / (rect.width / 2)))
-      const dy = Math.max(-1, Math.min(1, (e.clientY - cy) / (rect.height / 2)))
-      el.style.setProperty('--tilt-x', `${(-dy * 12).toFixed(2)}deg`)
-      el.style.setProperty('--tilt-y', `${(dx * 12).toFixed(2)}deg`)
-    }
-    const reset = () => {
-      el.style.setProperty('--tilt-x', '0deg')
-      el.style.setProperty('--tilt-y', '0deg')
-    }
-
-    window.addEventListener('mousemove', handleMove)
-    window.addEventListener('mouseout', reset)
-    return () => {
-      window.removeEventListener('mousemove', handleMove)
-      window.removeEventListener('mouseout', reset)
-    }
-  }, [reducedMotion])
-
-  return (
-    <div className="avatar-wrap">
-      <div className="avatar-tilt" ref={tiltRef}>
-        <span className="avatar-ring" aria-hidden="true" />
-        <span className="avatar-dot dot-1" aria-hidden="true" />
-        <span className="avatar-dot dot-2" aria-hidden="true" />
-        <span className="avatar-dot dot-3" aria-hidden="true" />
-        <img className="avatar-photo" src="/profile.jpg" alt="Sai Hemanth Babu Sunkari" width="132" height="132" />
-      </div>
-    </div>
-  )
-}
-
 function NavLink({ item, active, onClick }) {
   return (
     <a href={`#${item.toLowerCase()}`} className={`nav-link ${active ? 'active' : ''}`} onClick={onClick}>
@@ -324,12 +279,12 @@ function App() {
         <section className="hero">
           <div className="hero-glow">
             <span className="glow-blob blob-1" />
-            <span className="glow-blob blob-2" />
           </div>
-          <Suspense fallback={null}>
-            <Scene3D reducedMotion={reducedMotion} />
-          </Suspense>
-          <Avatar reducedMotion={reducedMotion} />
+          <div className="avatar-3d-wrap">
+            <Suspense fallback={null}>
+              <Scene3D reducedMotion={reducedMotion} />
+            </Suspense>
+          </div>
           <p className="eyebrow">
             {typedRole}
             <span className="cursor" aria-hidden="true">
