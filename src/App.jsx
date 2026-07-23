@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import './App.css'
+
+const Scene3D = lazy(() => import('./Scene3D'))
 
 const LINKS = {
   email: 'hemanth.sunkari@gmail.com',
@@ -11,6 +13,17 @@ const LINKS = {
 const NAV_ITEMS = ['About', 'Skills', 'Experience', 'Projects', 'Education', 'Contact']
 
 const ROLES = ['Software Engineer', 'Backend Developer', 'Cloud & Kafka Enthusiast']
+
+const MARQUEE_WORDS = [
+  'JAVA',
+  'SPRING BOOT',
+  'APACHE KAFKA',
+  'AWS',
+  'DOCKER',
+  'KUBERNETES',
+  'REACT',
+  'MICROSERVICES',
+]
 
 const SECTION_IDS = NAV_ITEMS.map((item) => item.toLowerCase())
 
@@ -247,9 +260,29 @@ function Avatar({ reducedMotion }) {
 
 function NavLink({ item, active, onClick }) {
   return (
-    <a href={`#${item.toLowerCase()}`} className={active ? 'active' : ''} onClick={onClick}>
-      {item}
+    <a href={`#${item.toLowerCase()}`} className={`nav-link ${active ? 'active' : ''}`} onClick={onClick}>
+      <span className="nav-link-track">
+        <span className="nav-link-face">{item}</span>
+        <span className="nav-link-face" aria-hidden="true">
+          {item}
+        </span>
+      </span>
     </a>
+  )
+}
+
+function Marquee({ words }) {
+  return (
+    <div className="marquee" aria-hidden="true">
+      <div className="marquee-track">
+        {[...words, ...words].map((word, i) => (
+          <span className="marquee-item" key={`${word}-${i}`}>
+            {word}
+            <span className="marquee-dot">•</span>
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -293,6 +326,9 @@ function App() {
             <span className="glow-blob blob-1" />
             <span className="glow-blob blob-2" />
           </div>
+          <Suspense fallback={null}>
+            <Scene3D reducedMotion={reducedMotion} />
+          </Suspense>
           <Avatar reducedMotion={reducedMotion} />
           <p className="eyebrow">
             {typedRole}
@@ -322,6 +358,8 @@ function App() {
           </div>
           <p className="hero-location">Denton, Texas, United States</p>
         </section>
+
+        <Marquee words={MARQUEE_WORDS} />
 
         <section id="about" className="section">
           <Reveal as="h2" className="section-title">
@@ -391,22 +429,26 @@ function App() {
           <Reveal as="h2" className="section-title">
             Projects
           </Reveal>
-          <div className="projects-grid">
+          <div className="projects-list">
             {PROJECTS.map((project, i) => (
-              <Reveal as="article" className="project-card" key={project.name} delay={i * 80}>
-                <h3>{project.name}</h3>
-                <ul className="pill-list">
-                  {project.stack.map((t, ti) => (
-                    <li className="pill pill-accent" key={t} style={{ '--i': ti }}>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-                <ul>
-                  {project.bullets.map((b, bi) => (
-                    <li key={bi}>{b}</li>
-                  ))}
-                </ul>
+              <Reveal as="article" className="project-row" key={project.name} delay={i * 80}>
+                <span className="project-index">{String(i + 1).padStart(2, '0')}</span>
+                <div className="project-row-body">
+                  <h3>{project.name}</h3>
+                  <p className="project-row-label">Tools and features</p>
+                  <ul className="pill-list">
+                    {project.stack.map((t, ti) => (
+                      <li className="pill pill-accent" key={t} style={{ '--i': ti }}>
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                  <ul className="project-row-bullets">
+                    {project.bullets.map((b, bi) => (
+                      <li key={bi}>{b}</li>
+                    ))}
+                  </ul>
+                </div>
               </Reveal>
             ))}
           </div>

@@ -68,15 +68,14 @@
   gap: 28px;
 }
 
-.nav-links a {
+.nav-link {
   position: relative;
   text-decoration: none;
   font-size: 15px;
   color: var(--text);
-  transition: color 0.2s;
 }
 
-.nav-links a::after {
+.nav-link::after {
   content: '';
   position: absolute;
   left: 0;
@@ -89,21 +88,35 @@
   transition: transform 0.25s ease;
 }
 
-.nav-links a:hover {
-  color: var(--accent);
-}
-
-.nav-links a:hover::after {
+.nav-link:hover::after,
+.nav-link.active::after {
   transform: scaleX(1);
 }
 
-.nav-links a.active {
-  color: var(--accent);
+.nav-link.active {
   font-weight: 600;
 }
 
-.nav-links a.active::after {
-  transform: scaleX(1);
+.nav-link-track {
+  display: block;
+  height: 1.2em;
+  line-height: 1.2em;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.nav-link:hover .nav-link-track,
+.nav-link.active .nav-link-track {
+  transform: translateY(-1.2em);
+}
+
+.nav-link-face {
+  display: block;
+  height: 1.2em;
+}
+
+.nav-link-face:last-child {
+  color: var(--accent);
 }
 
 .nav-toggle {
@@ -146,7 +159,8 @@
     max-height: 320px;
   }
 
-  .nav-links a {
+  .nav-link {
+    display: block;
     padding: 14px 24px;
     border-top: 1px solid var(--border);
   }
@@ -203,6 +217,62 @@
   }
   50% {
     transform: translate(30px, 20px) scale(1.15);
+  }
+}
+
+.scene3d-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Marquee */
+.marquee {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  padding: 14px 0;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 22s linear infinite;
+}
+
+.marquee-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-right: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-h);
+  white-space: nowrap;
+}
+
+.marquee-dot {
+  color: var(--accent);
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
   }
 }
 
@@ -606,7 +676,7 @@
 }
 
 .timeline-item ul,
-.project-card ul:last-of-type {
+.project-row-bullets {
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -614,7 +684,7 @@
 }
 
 .timeline-item li,
-.project-card li {
+.project-row-bullets li {
   position: relative;
   padding-left: 18px;
   font-size: 15px;
@@ -622,7 +692,7 @@
 }
 
 .timeline-item li::before,
-.project-card li::before {
+.project-row-bullets li::before {
   content: '';
   position: absolute;
   left: 0;
@@ -633,42 +703,72 @@
   background: var(--accent);
 }
 
-.project-card ul.pill-list li::before {
-  display: none;
-}
-
 /* Projects */
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+.projects-list {
+  display: flex;
+  flex-direction: column;
   text-align: left;
 }
 
-.project-card {
+.project-row {
+  display: flex;
+  gap: 24px;
+  padding: 32px 16px;
+  border-top: 1px solid var(--border);
+  transition: background 0.25s ease, padding-left 0.25s ease;
+}
+
+.projects-list .project-row:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.project-row:hover {
   background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 22px;
+  padding-left: 24px;
+}
+
+.project-index {
+  flex: none;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  padding-top: 4px;
+}
+
+.project-row-body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  gap: 12px;
+  min-width: 0;
 }
 
-.project-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  border-color: var(--accent-border);
-  box-shadow: var(--shadow);
-}
-
-.project-card h3 {
-  font-size: 17px;
+.project-row-body h3 {
+  font-size: 20px;
   margin: 0;
 }
 
-.project-card .pill-list {
+.project-row-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin: 0;
+}
+
+.project-row-body .pill-list {
   margin-bottom: 4px;
+}
+
+@media (max-width: 640px) {
+  .project-row {
+    gap: 14px;
+    padding: 24px 8px;
+  }
+
+  .project-row-body h3 {
+    font-size: 18px;
+  }
 }
 
 /* Education / Certifications */
