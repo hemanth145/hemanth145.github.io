@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const LINKS = {
@@ -9,6 +9,10 @@ const LINKS = {
 }
 
 const NAV_ITEMS = ['About', 'Skills', 'Experience', 'Projects', 'Education', 'Contact']
+
+const ROLES = ['Software Engineer', 'Backend Developer', 'Cloud & Kafka Enthusiast']
+
+const SECTION_IDS = NAV_ITEMS.map((item) => item.toLowerCase())
 
 const SKILLS = [
   {
@@ -101,9 +105,149 @@ const CERTIFICATIONS = [
   'Google IT Support Professional Certificate — Coursera',
 ]
 
-function NavLink({ item, onClick }) {
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReduced(mq.matches)
+    const onChange = () => setReduced(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return reduced
+}
+
+function useTypewriter(words, reduced, { typingSpeed = 70, deletingSpeed = 40, pause = 1400 } = {}) {
+  const [index, setIndex] = useState(0)
+  const [subIndex, setSubIndex] = useState(0)
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (reduced) return undefined
+
+    if (!deleting && subIndex === words[index].length) {
+      const t = setTimeout(() => setDeleting(true), pause)
+      return () => clearTimeout(t)
+    }
+
+    if (deleting && subIndex === 0) {
+      setDeleting(false)
+      setIndex((i) => (i + 1) % words.length)
+      return undefined
+    }
+
+    const t = setTimeout(() => {
+      setSubIndex((s) => s + (deleting ? -1 : 1))
+    }, deleting ? deletingSpeed : typingSpeed)
+    return () => clearTimeout(t)
+  }, [subIndex, deleting, index, words, reduced, typingSpeed, deletingSpeed, pause])
+
+  if (reduced) return words[0]
+  return words[index].substring(0, subIndex)
+}
+
+function useActiveSection(ids) {
+  const [active, setActive] = useState(null)
+
+  useEffect(() => {
+    const elements = ids.map((id) => document.getElementById(id)).filter(Boolean)
+    if (elements.length === 0) return undefined
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(entry.target.id)
+        })
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 },
+    )
+    elements.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [ids])
+
+  return active
+}
+
+function Reveal({ as: Tag = 'div', className = '', delay = 0, children, ...rest }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.15 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <a href={`#${item.toLowerCase()}`} onClick={onClick}>
+    <Tag
+      ref={ref}
+      className={`reveal ${visible ? 'reveal-visible' : ''} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+      {...rest}
+    >
+      {children}
+    </Tag>
+  )
+}
+
+function Avatar({ reducedMotion }) {
+  const tiltRef = useRef(null)
+
+  useEffect(() => {
+    if (reducedMotion) return undefined
+    if (window.matchMedia && !window.matchMedia('(pointer: fine)').matches) return undefined
+
+    const el = tiltRef.current
+    if (!el) return undefined
+
+    const handleMove = (e) => {
+      const rect = el.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / (rect.width / 2)))
+      const dy = Math.max(-1, Math.min(1, (e.clientY - cy) / (rect.height / 2)))
+      el.style.setProperty('--tilt-x', `${(-dy * 12).toFixed(2)}deg`)
+      el.style.setProperty('--tilt-y', `${(dx * 12).toFixed(2)}deg`)
+    }
+    const reset = () => {
+      el.style.setProperty('--tilt-x', '0deg')
+      el.style.setProperty('--tilt-y', '0deg')
+    }
+
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseout', reset)
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseout', reset)
+    }
+  }, [reducedMotion])
+
+  return (
+    <div className="avatar-wrap">
+      <div className="avatar-tilt" ref={tiltRef}>
+        <span className="avatar-ring" aria-hidden="true" />
+        <span className="avatar-dot dot-1" aria-hidden="true" />
+        <span className="avatar-dot dot-2" aria-hidden="true" />
+        <span className="avatar-dot dot-3" aria-hidden="true" />
+        <img className="avatar-photo" src="/profile.jpg" alt="Sai Hemanth Babu Sunkari" width="132" height="132" />
+      </div>
+    </div>
+  )
+}
+
+function NavLink({ item, active, onClick }) {
+  return (
+    <a href={`#${item.toLowerCase()}`} className={active ? 'active' : ''} onClick={onClick}>
       {item}
     </a>
   )
@@ -112,6 +256,9 @@ function NavLink({ item, onClick }) {
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
+  const reducedMotion = usePrefersReducedMotion()
+  const typedRole = useTypewriter(ROLES, reducedMotion)
+  const activeSection = useActiveSection(SECTION_IDS)
 
   return (
     <>
@@ -121,7 +268,12 @@ function App() {
         </a>
         <nav className={`nav-links ${menuOpen ? 'open' : ''}`}>
           {NAV_ITEMS.map((item) => (
-            <NavLink key={item} item={item} onClick={closeMenu} />
+            <NavLink
+              key={item}
+              item={item}
+              active={activeSection === item.toLowerCase()}
+              onClick={closeMenu}
+            />
           ))}
         </nav>
         <button
@@ -137,7 +289,17 @@ function App() {
 
       <main id="top">
         <section className="hero">
-          <p className="eyebrow">Software Engineer</p>
+          <div className="hero-glow">
+            <span className="glow-blob blob-1" />
+            <span className="glow-blob blob-2" />
+          </div>
+          <Avatar reducedMotion={reducedMotion} />
+          <p className="eyebrow">
+            {typedRole}
+            <span className="cursor" aria-hidden="true">
+              |
+            </span>
+          </p>
           <h1>Sai Hemanth Babu Sunkari</h1>
           <p className="hero-summary">
             I build secure, scalable microservices in Java/Spring Boot and event-driven
@@ -162,8 +324,10 @@ function App() {
         </section>
 
         <section id="about" className="section">
-          <h2 className="section-title">About</h2>
-          <p className="about-text">
+          <Reveal as="h2" className="section-title">
+            About
+          </Reveal>
+          <Reveal as="p" className="about-text" delay={80}>
             Software Engineer with hands-on experience building secure, scalable
             microservices in Java/Spring Boot and event-driven systems with Apache Kafka,
             deployed via Docker/Kubernetes on AWS (EKS, EC2, S3, Lambda). Strong grounding
@@ -173,32 +337,36 @@ function App() {
             issues and tuning SQL for reliability and performance; experienced documenting
             architecture and deployment procedures and leveraging GenAI tools for faster
             iteration while validating outputs through peer review and self-review.
-          </p>
+          </Reveal>
         </section>
 
         <section id="skills" className="section">
-          <h2 className="section-title">Skills</h2>
+          <Reveal as="h2" className="section-title">
+            Skills
+          </Reveal>
           <div className="skills-grid">
-            {SKILLS.map((group) => (
-              <div className="skill-card" key={group.label}>
+            {SKILLS.map((group, i) => (
+              <Reveal as="div" className="skill-card" key={group.label} delay={i * 60}>
                 <h3>{group.label}</h3>
                 <ul className="pill-list">
-                  {group.items.map((item) => (
-                    <li className="pill" key={item}>
+                  {group.items.map((item, pi) => (
+                    <li className="pill" key={item} style={{ '--i': pi }}>
                       {item}
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
         <section id="experience" className="section">
-          <h2 className="section-title">Experience</h2>
+          <Reveal as="h2" className="section-title">
+            Experience
+          </Reveal>
           <div className="timeline">
-            {EXPERIENCE.map((job) => (
-              <article className="timeline-item" key={job.company}>
+            {EXPERIENCE.map((job, i) => (
+              <Reveal as="article" className="timeline-item" key={job.company} delay={i * 80}>
                 <div className="timeline-header">
                   <div>
                     <h3>{job.role}</h3>
@@ -210,62 +378,72 @@ function App() {
                   <p className="timeline-period">{job.period}</p>
                 </div>
                 <ul>
-                  {job.bullets.map((b, i) => (
-                    <li key={i}>{b}</li>
+                  {job.bullets.map((b, bi) => (
+                    <li key={bi}>{b}</li>
                   ))}
                 </ul>
-              </article>
+              </Reveal>
             ))}
           </div>
         </section>
 
         <section id="projects" className="section">
-          <h2 className="section-title">Projects</h2>
+          <Reveal as="h2" className="section-title">
+            Projects
+          </Reveal>
           <div className="projects-grid">
-            {PROJECTS.map((project) => (
-              <article className="project-card" key={project.name}>
+            {PROJECTS.map((project, i) => (
+              <Reveal as="article" className="project-card" key={project.name} delay={i * 80}>
                 <h3>{project.name}</h3>
                 <ul className="pill-list">
-                  {project.stack.map((t) => (
-                    <li className="pill pill-accent" key={t}>
+                  {project.stack.map((t, ti) => (
+                    <li className="pill pill-accent" key={t} style={{ '--i': ti }}>
                       {t}
                     </li>
                   ))}
                 </ul>
                 <ul>
-                  {project.bullets.map((b, i) => (
-                    <li key={i}>{b}</li>
+                  {project.bullets.map((b, bi) => (
+                    <li key={bi}>{b}</li>
                   ))}
                 </ul>
-              </article>
+              </Reveal>
             ))}
           </div>
         </section>
 
         <section id="education" className="section">
-          <h2 className="section-title">Education</h2>
-          <div className="education-card">
+          <Reveal as="h2" className="section-title">
+            Education
+          </Reveal>
+          <Reveal as="div" className="education-card">
             <div>
               <h3>University of North Texas</h3>
               <p className="timeline-company">Master of Science, Computer Science · GPA 3.45</p>
             </div>
             <p className="timeline-period">Jan 2023 – Dec 2024</p>
-          </div>
+          </Reveal>
 
-          <h2 className="section-title certifications-title">Certifications</h2>
+          <Reveal as="h2" className="section-title certifications-title">
+            Certifications
+          </Reveal>
           <ul className="cert-list">
-            {CERTIFICATIONS.map((c) => (
-              <li key={c}>{c}</li>
+            {CERTIFICATIONS.map((c, i) => (
+              <Reveal as="li" key={c} delay={i * 60}>
+                {c}
+              </Reveal>
             ))}
           </ul>
         </section>
 
         <section id="contact" className="section contact">
-          <h2 className="section-title">Let's work together</h2>
-          <p className="about-text">
+          <Reveal as="h2" className="section-title">
+            Let's work together
+          </Reveal>
+          <Reveal as="p" className="about-text" delay={80}>
             I'm open to new opportunities and interesting problems. The fastest way to
             reach me is email.
-          </p>
+          </Reveal>
           <div className="hero-actions">
             <a className="btn btn-primary" href={`mailto:${LINKS.email}`}>
               {LINKS.email}
