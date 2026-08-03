@@ -76,6 +76,17 @@ export const projects: { title: string; stack: string[]; points: string[]; link?
       'Configured a Python virtual environment with PyTorch and Transformers for seamless local model execution.',
     ],
   },
+  {
+    title: 'AI Voice Agent Platform',
+    stack: ['Python', 'FastAPI', 'Vapi', 'Groq', 'SQLite'],
+    points: [
+      'Built a production voice AI platform automating inbound business call handling, integrating real-time speech-to-text/text-to-speech pipelines with LLM-driven conversational logic (Groq-hosted models).',
+      'Designed a request-proxy layer between the voice orchestration platform (Vapi) and the LLM provider (Groq) to resolve schema validation failures and rate-limiting under free-tier constraints, ensuring reliable real-time performance.',
+      'Implemented persistent SQLite-backed memory to track caller history and context across sessions, personalizing repeat interactions.',
+      'Built dynamic call escalation/live-transfer logic and automated post-call AI-generated summaries for business-owner review.',
+      'Deployed via webhook-driven architecture (FastAPI + ngrok) integrating Google Voice number forwarding with a phone-based AI orchestration platform.',
+    ],
+  },
 ]
 
 export const skillGroups = [
